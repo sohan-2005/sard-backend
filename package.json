@@ -4,8 +4,6 @@
   "description": "this is the backend for my gen ai website",
   "license": "MIT",
   "author": "sard",
-
-  "type": "module",
   "main": "server.js",
 
   "scripts": {
