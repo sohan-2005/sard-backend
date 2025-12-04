@@ -3,29 +3,34 @@ const errorHandler = require("./middleware/errorHandler");
 const connectDb = require("./config/dbConnection");
 const dotenv = require("dotenv").config();
 const cors = require("cors");
-const chatRoutes = require('./routes/chatRoutes');
 const bodyParser = require("body-parser");
+
+// Routes
+const chatRoutes = require('./routes/chatRoutes');
 const forecastRoutes = require('./routes/forecastRoutes');
 const recommendationRoutes = require('./routes/recommendationRoutes');
 const alertRoutes = require('./routes/alertRoutes');
 const statsRoutes = require('./routes/statsRoutes');
 
-// 👇 Gemini SDK (CommonJS import style)
+// Gemini SDK
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
+// Connect DB
 connectDb();
 const app = express();
 
 // ---------------- CORS FIX -----------------
-app.use(cors({
-  origin: [
-    "http://localhost:5173",            // Vite local
-    "http://localhost:3000",            // React local
-    "https://kaleidoscopic-seahorse-f7300f.netlify.app",  // replace after deploy
-    "*"                                 // temporary during testing
-  ],
-  methods: ["GET", "POST"]
-}));
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "http://localhost:3000",
+      "https://kaleidoscopic-seahorse-f7300f.netlify.app"
+    ],
+    methods: ["GET", "POST"],
+    allowedHeaders: ["Content-Type", "Authorization"]
+  })
+);
 
 app.use(express.json());
 app.use(bodyParser.json());
@@ -34,12 +39,12 @@ app.use(bodyParser.json());
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
-// --------------- GEMINI ROUTE ------------------
+// --------------- MAIN AI CHAT ROUTE ------------------
 app.post("/api/chat", async (req, res) => {
   try {
     const { message } = req.body;
 
-    if (!message) {
+    if (!message?.trim()) {
       return res.status(400).json({ reply: "Message cannot be empty." });
     }
 
@@ -53,6 +58,7 @@ app.post("/api/chat", async (req, res) => {
   }
 });
 
+// ---------------- OTHER ROUTES -----------------
 app.use('/api/legacy-chat', chatRoutes);
 app.use("/api/contacts", require("./routes/genRoutes"));
 app.use("/api/users", require("./routes/userRoutes"));
@@ -61,13 +67,13 @@ app.use('/api/recommendations', recommendationRoutes);
 app.use('/api/alerts', alertRoutes);
 app.use('/api/stats', statsRoutes);
 
+// Error handler
 app.use(errorHandler);
 
+// Health check
 app.get("/", (req, res) => {
   res.send("Backend is running ✔");
 });
 
 const port = process.env.PORT || 5000;
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
-});
+app.listen(port, () => console.log(`🚀 Server running on port ${port}`));
