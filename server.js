@@ -21,7 +21,7 @@ app.use(cors({
   origin: [
     "http://localhost:5173",            // Vite local
     "http://localhost:3000",            // React local
-    "https://your-netlify-site.netlify.app",  // replace after deploy
+    "https://kaleidoscopic-seahorse-f7300f.netlify.app",  // replace after deploy
     "*"                                 // temporary during testing
   ],
   methods: ["GET", "POST"]
