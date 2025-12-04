@@ -1,34 +1,29 @@
-const express = require('express');
-const fetch = require('node-fetch');
-const dotenv = require('dotenv');
-dotenv.config();
-
+const express = require("express");
 const router = express.Router();
 
-router.post('/chat', async (req, res) => {
+const { GoogleGenerativeAI } = require("@google/generative-ai");
+
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+
+router.post("/chat", async (req, res) => {
   try {
     const { message } = req.body;
 
-    const response = await fetch('https://api.cohere.ai/v1/generate', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.COHERE_API_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: 'command-r-plus',
-        prompt: `User asked: ${message}`,
-        max_tokens: 200,
-        temperature: 0.7
-      })
-    });
+    if (!message || !message.trim()) {
+      return res.status(400).json({ reply: "Message cannot be empty." });
+    }
 
-    const data = await response.json();
+    const result = await model.generateContent(
+      `User asked: ${message}`
+    );
 
-    res.json({ reply: data.generations && data.generations[0]?.text?.trim() });
+    const reply = result.response.text();
+
+    res.json({ reply });
   } catch (error) {
-    console.error('❌ Cohere API Error:', error);
-    res.status(500).json({ reply: 'Server error while connecting to Cohere API.' });
+    console.error("❌ Gemini Chat Error:", error);
+    res.status(500).json({ reply: "AI service error." });
   }
 });
 

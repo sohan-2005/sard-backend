@@ -3,6 +3,6 @@ const { getRecommendations } = require('../controllers/recommendationController'
 
 const router = express.Router();
 
-router.get('/', getRecommendations);
+router.post('/', getRecommendations);
 
 module.exports = router;

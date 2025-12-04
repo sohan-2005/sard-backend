@@ -37,29 +37,11 @@ app.use(bodyParser.json());
 
 // ---------------- GEMINI SETUP -----------------
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-// --------------- MAIN AI CHAT ROUTE ------------------
-app.post("/api/chat", async (req, res) => {
-  try {
-    const { message } = req.body;
-
-    if (!message?.trim()) {
-      return res.status(400).json({ reply: "Message cannot be empty." });
-    }
-
-    const result = await model.generateContent(message);
-    const reply = result.response.text();
-
-    res.json({ reply });
-  } catch (error) {
-    console.error("Gemini Error:", error);
-    res.status(500).json({ reply: "AI service error." });
-  }
-});
 
 // ---------------- OTHER ROUTES -----------------
-app.use('/api/legacy-chat', chatRoutes);
+app.use('/api', chatRoutes);
 app.use("/api/contacts", require("./routes/genRoutes"));
 app.use("/api/users", require("./routes/userRoutes"));
 app.use('/api/forecast', forecastRoutes);

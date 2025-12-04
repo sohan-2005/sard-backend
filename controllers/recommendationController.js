@@ -1,24 +1,45 @@
-// controllers/recommendationController.js
-const getRecommendations = (req, res) => {
-  const recommendations = [
-    {
-      title: 'Increase Stock for Product D',
-      description: 'AI predicts 35% increase in demand over next 2 weeks based on seasonal patterns.',
-      priority: 'high'
-    },
-    {
-      title: 'Optimize Pricing for Product C',
-      description: 'Recommended 8% price reduction to match competitor levels.',
-      priority: 'medium'
-    },
-    {
-      title: 'Marketing Push for Product E',
-      description: 'Increase marketing spend by 20% to boost visibility and conversions.',
-      priority: 'medium'
-    },
-  ];
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 
-  res.json(recommendations);
+// Initialize Gemini
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+
+const getRecommendations = async (req, res) => {
+  try {
+    const { businessType, salesData, inventoryData } = req.body;
+
+    const prompt = `
+    You are an expert business analyst.
+    Provide 3–5 clear, actionable recommendations based on the following:
+
+    Business Type: ${businessType || "General store"}
+    Recent Sales Data: ${JSON.stringify(salesData || {})}
+    Inventory Data: ${JSON.stringify(inventoryData || {})}
+
+    Format the output strictly as a JSON array like this:
+    [
+      { "title": "", "description": "", "priority": "" }
+    ]
+
+    Priorities: "high", "medium", or "low".
+    Return ONLY valid JSON, nothing else.
+    `;
+
+    const result = await model.generateContent(prompt);
+    const reply = result.response.text();
+
+    // Sometimes Gemini wraps JSON in ```json
+    const cleaned = reply.replace(/```json|```/g, "").trim();
+
+    const json = JSON.parse(cleaned);
+
+    res.json(json);
+  } catch (err) {
+    console.error("❌ Gemini Recommendation Error:", err);
+    res.status(500).json({
+      error: "AI could not generate recommendations"
+    });
+  }
 };
 
 module.exports = { getRecommendations };
